@@ -1,0 +1,41 @@
+package netcup
+
+import "encoding/json"
+
+type dnsRecord struct {
+	ID               string `json:"id"`
+	HostName         string `json:"hostname"`
+	RecType          string `json:"type"`
+	Destination      string `json:"destination"`
+	DeleteRecordFlag bool   `json:"deleterecordflag"`
+}
+
+type dnsRecordSet struct {
+	DnsRecords []dnsRecord `json:"dnsrecords"`
+}
+
+type requestParam struct {
+	DomainName     string       `json:"domainname,omitempty"`
+	CustomerNumber string       `json:"customernumber"`
+	ApiKey         string       `json:"apikey"`
+	ApiPassword    string       `json:"apipassword,omitempty"`
+	ApiSessionID   string       `json:"apisessionid,omitempty"`
+	DnsRecordSet   dnsRecordSet `json:"dnsrecordset,omitempty"`
+}
+
+type request struct {
+	Action string       `json:"action"`
+	Param  requestParam `json:"param"`
+}
+
+type response struct {
+	Action       string          `json:"action"`
+	Status       string          `json:"status"`
+	ShortMessage string          `json:"shortmessage"`
+	LongMessage  string          `json:"longmessage"`
+	ResponseData json.RawMessage `json:"responsedata"`
+}
+
+type apiSessionData struct {
+	ApiSessionId string `json:"apisessionid"`
+}

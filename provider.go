@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"sync"
 
@@ -29,104 +28,6 @@ type Provider struct {
 	ApiKey         string `json:"api_key"`
 	ApiPassword    string `json:"api_password"`
 	mu             sync.Mutex
-}
-
-type dnsRecord struct {
-	ID               string `json:"id"`
-	HostName         string `json:"hostname"`
-	RecType          string `json:"type"`
-	Destination      string `json:"destination"`
-	DeleteRecordFlag bool   `json:"deleterecordflag"`
-}
-
-type dnsRecordSet struct {
-	DnsRecords []dnsRecord `json:"dnsrecords"`
-}
-
-type requestParam struct {
-	DomainName     string       `json:"domainname,omitempty"`
-	CustomerNumber string       `json:"customernumber"`
-	ApiKey         string       `json:"apikey"`
-	ApiPassword    string       `json:"apipassword,omitempty"`
-	ApiSessionID   string       `json:"apisessionid,omitempty"`
-	DnsRecordSet   dnsRecordSet `json:"dnsrecordset,omitempty"`
-}
-
-type request struct {
-	Action string       `json:"action"`
-	Param  requestParam `json:"param"`
-}
-
-type response struct {
-	Action       string `json:"action"`
-	Status       string `json:"status"`
-	ShortMessage string `json:"shortmessage"`
-	LongMessage  string `json:"longmessage"`
-}
-
-type apiSessionData struct {
-	ApiSessionId string `json:"apisessionid"`
-}
-
-type loginResponse struct {
-	response
-	ResponseData apiSessionData `json:"responsedata"`
-}
-
-type dnsInfoResponse struct {
-	response
-	ResponseData dnsRecordSet `json:"responsedata"`
-}
-
-const apiUrl = "https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON"
-
-func (p *Provider) doRequest(req *http.Request) ([]byte, error) {
-	resp, err := http.DefaultClient.Do(req)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	return ioutil.ReadAll(resp.Body)
-}
-
-func (p *Provider) login(ctx context.Context) (string, error) {
-	loginRequest := request{
-		Action: "login",
-		Param: requestParam{
-			CustomerNumber: p.CustomerNumber,
-			ApiKey:         p.ApiKey,
-			ApiPassword:    p.ApiPassword,
-		},
-	}
-
-	requestBody, err := json.Marshal(loginRequest)
-	if err != nil {
-		return "", err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", apiUrl, bytes.NewReader(requestBody))
-	if err != nil {
-		return "", err
-	}
-
-	responseBody, err := p.doRequest(req)
-	if err != nil {
-		return "", err
-	}
-
-	var response loginResponse
-	if err = json.Unmarshal(responseBody, &response); err != nil {
-		return "", err
-	}
-	if response.Status == "error" {
-		return "", fmt.Errorf("login failed: %v (%v)", response.ShortMessage, response.LongMessage)
-	}
-	fmt.Printf("Login successful, session ID: %v\n", response.ResponseData.ApiSessionId)
-
-	return response.ResponseData.ApiSessionId, nil
 }
 
 // GetRecords lists all the records in the zone.
@@ -159,22 +60,18 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 		return nil, err
 	}
 
-	responseBody, err := p.doRequest(req)
+	res, err := p.doRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
-	var response dnsInfoResponse
-	if err = json.Unmarshal(responseBody, &response); err != nil {
+	var recordSet dnsRecordSet
+	if err = json.Unmarshal(res.ResponseData, &recordSet); err != nil {
 		return nil, err
 	}
 
-	if response.Status == "error" {
-		return nil, fmt.Errorf("getRecords failed: %v (%v)", response.ShortMessage, response.LongMessage)
-	}
-
 	var libDNSRecords []libdns.Record
-	for _, record := range response.ResponseData.DnsRecords {
+	for _, record := range recordSet.DnsRecords {
 		libDNSRecord := libdns.Record{
 			ID:    record.ID,
 			Type:  record.RecType,
