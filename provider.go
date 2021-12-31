@@ -1,6 +1,5 @@
-// Package libdnstemplate implements a DNS record management client compatible
-// with the libdns interfaces for <PROVIDER NAME>. TODO: This package is a
-// template only. Customize all godocs for actual implementation.
+// Package netcup implements a DNS record management client compatible
+// with the libdns interfaces for netcup.
 package netcup
 
 import (
@@ -10,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/libdns/libdns"
 )
@@ -20,22 +20,26 @@ import (
 // when methods are called; sync.Once can help with this, and/or you can use a
 // sync.(RW)Mutex in your Provider struct to synchronize implicit provisioning.
 
-// Provider facilitates DNS record manipulation with <TODO: PROVIDER NAME>.
+// Provider facilitates DNS record manipulation with netcup.
 type Provider struct {
-	// TODO: put config fields here (with snake_case json
-	// struct tags on exported fields), for example:
 	CustomerNumber string `json:"customer_number"`
 	ApiKey         string `json:"api_key"`
 	ApiPassword    string `json:"api_password"`
-	mu             sync.Mutex
+	mutex          sync.Mutex
 }
 
 // GetRecords lists all the records in the zone.
 func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 
 	apiSessionId, err := p.login(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer p.logout(ctx, apiSessionId)
+
+	dnsZone, err := p.getDNSZone(ctx, zone, apiSessionId)
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +77,12 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 	var libDNSRecords []libdns.Record
 	for _, record := range recordSet.DnsRecords {
 		libDNSRecord := libdns.Record{
-			ID:    record.ID,
-			Type:  record.RecType,
-			Name:  record.HostName,
-			Value: record.Destination,
+			ID:       record.ID,
+			Type:     record.RecType,
+			Name:     record.HostName,
+			Value:    record.Destination,
+			TTL:      time.Duration(dnsZone.TTL * int64(time.Second)),
+			Priority: record.Priority,
 		}
 		libDNSRecords = append(libDNSRecords, libDNSRecord)
 	}

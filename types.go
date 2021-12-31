@@ -1,17 +1,29 @@
 package netcup
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type dnsRecord struct {
-	ID               string `json:"id"`
-	HostName         string `json:"hostname"`
-	RecType          string `json:"type"`
-	Destination      string `json:"destination"`
-	DeleteRecordFlag bool   `json:"deleterecordflag"`
+	ID          string `json:"id"`
+	HostName    string `json:"hostname"`
+	RecType     string `json:"type"`
+	Destination string `json:"destination"`
+	Priority    int    `json:"priority,string"`
 }
 
 type dnsRecordSet struct {
 	DnsRecords []dnsRecord `json:"dnsrecords"`
+}
+
+type apiSessionData struct {
+	ApiSessionId string `json:"apisessionid"`
+}
+
+// Information about the zone. Name: the zone name, TTL: time to live in seconds
+type dnsZone struct {
+	Name string `json:"name"`
+	TTL  int64  `json:"ttl,string"`
 }
 
 type requestParam struct {
@@ -34,8 +46,4 @@ type response struct {
 	ShortMessage string          `json:"shortmessage"`
 	LongMessage  string          `json:"longmessage"`
 	ResponseData json.RawMessage `json:"responsedata"`
-}
-
-type apiSessionData struct {
-	ApiSessionId string `json:"apisessionid"`
 }
