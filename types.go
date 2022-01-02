@@ -5,11 +5,12 @@ import (
 )
 
 type dnsRecord struct {
-	ID          string `json:"id"`
-	HostName    string `json:"hostname"`
-	RecType     string `json:"type"`
-	Destination string `json:"destination"`
-	Priority    int    `json:"priority,string"`
+	ID           string `json:"id"`
+	HostName     string `json:"hostname"`
+	RecType      string `json:"type"`
+	Priority     int    `json:"priority,string"`
+	Destination  string `json:"destination"`
+	DeleteRecord bool   `json:"deleterecord"`
 }
 
 func (rec *dnsRecord) equals(otherRec dnsRecord) bool {

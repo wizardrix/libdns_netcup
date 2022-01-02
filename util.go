@@ -84,45 +84,35 @@ func findRecordByNameAndTypeAndPriority(hostName string, recType string, priorit
 	return nil
 }
 
-// func findRecordByExample(exampleRecord dnsRecord, records []dnsRecord) *dnsRecord {
-// 	for _, record := range records {
-// 		if record.equals(exampleRecord) {
-// 			return &record
-// 		}
-// 	}
+func findRecord(record dnsRecord, records []dnsRecord) *dnsRecord {
+	var foundRecord *dnsRecord
+	if record.ID != "" {
+		foundRecord = findRecordByID(record.ID, records)
+	} else if record.RecType != "MX" {
+		foundRecord = findRecordByNameAndType(record.HostName, record.RecType, records)
+	} else {
+		foundRecord = findRecordByNameAndTypeAndPriority(record.HostName, record.RecType, record.Priority, records)
+	}
 
-// 	return nil
-// }
+	return foundRecord
+}
 
-func getRecordsToAppend(updateRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
+func getRecordsToAppend(appendRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
 	var recordsToAppend []dnsRecord
-	for _, record := range updateRecords {
-		var foundRecord *dnsRecord
-		if record.RecType != "MX" {
-			foundRecord = findRecordByNameAndType(record.HostName, record.RecType, existingRecords)
-		} else {
-			foundRecord = findRecordByNameAndTypeAndPriority(record.HostName, record.RecType, record.Priority, existingRecords)
-		}
-		if foundRecord == nil || foundRecord.Destination != record.Destination {
+	for _, record := range appendRecords {
+		foundRecord := findRecord(record, existingRecords)
+		if foundRecord == nil || !foundRecord.equals(record) {
 			recordsToAppend = append(recordsToAppend, record)
 		}
 	}
 	return recordsToAppend
 }
 
-func getRecordsToSet(updateRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
+func getRecordsToSet(setRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
 	var recordsToUpdate []dnsRecord
 	var recordsToAppend []dnsRecord
-	for _, record := range updateRecords {
-		var foundRecord *dnsRecord
-		if record.ID != "" {
-			foundRecord = findRecordByID(record.ID, existingRecords)
-		} else if record.RecType != "MX" {
-			foundRecord = findRecordByNameAndType(record.HostName, record.RecType, existingRecords)
-		} else {
-			foundRecord = findRecordByNameAndTypeAndPriority(record.HostName, record.RecType, record.Priority, existingRecords)
-		}
-
+	for _, record := range setRecords {
+		foundRecord := findRecord(record, existingRecords)
 		if foundRecord != nil && !foundRecord.equals(record) {
 			record.ID = foundRecord.ID
 			recordsToUpdate = append(recordsToUpdate, record)
@@ -131,4 +121,18 @@ func getRecordsToSet(updateRecords []dnsRecord, existingRecords []dnsRecord) []d
 		}
 	}
 	return append(recordsToUpdate, recordsToAppend...)
+}
+
+func getRecordsToDelete(deleteRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
+	var recordsToDelete []dnsRecord
+	for _, record := range deleteRecords {
+		foundRecord := findRecord(record, existingRecords)
+		if foundRecord != nil {
+			record.ID = foundRecord.ID
+			record.Destination = foundRecord.Destination
+			record.DeleteRecord = true
+			recordsToDelete = append(recordsToDelete, record)
+		}
+	}
+	return recordsToDelete
 }
