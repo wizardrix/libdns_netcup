@@ -38,18 +38,97 @@ func toNetcupRecords(libnsRecords []libdns.Record) []dnsRecord {
 }
 
 // difference returns the records that are in a but not in b
-func difference(a, b []dnsRecord) []dnsRecord {
-	bIDmap := make(map[string]struct{}, len(b))
-	for _, elm := range b {
-		bIDmap[elm.ID] = struct{}{}
-	}
+// func difference(a, b []dnsRecord) []dnsRecord {
+// 	bIDmap := make(map[string]struct{}, len(b))
+// 	for _, elm := range b {
+// 		bIDmap[elm.ID] = struct{}{}
+// 	}
 
-	var diff []dnsRecord
-	for _, elm := range a {
-		if _, found := bIDmap[elm.ID]; !found {
-			diff = append(diff, elm)
+// 	var diff []dnsRecord
+// 	for _, elm := range a {
+// 		if _, found := bIDmap[elm.ID]; !found {
+// 			diff = append(diff, elm)
+// 		}
+// 	}
+
+// 	return diff
+// }
+
+func findRecordByID(id string, records []dnsRecord) *dnsRecord {
+	for _, record := range records {
+		if record.ID == id {
+			return &record
 		}
 	}
 
-	return diff
+	return nil
+}
+
+func findRecordByNameAndType(hostName string, recType string, records []dnsRecord) *dnsRecord {
+	for _, record := range records {
+		if record.HostName == hostName && record.RecType == recType {
+			return &record
+		}
+	}
+
+	return nil
+}
+
+func findRecordByNameAndTypeAndPriority(hostName string, recType string, priority int, records []dnsRecord) *dnsRecord {
+	for _, record := range records {
+		if record.HostName == hostName && record.RecType == recType && record.Priority == priority {
+			return &record
+		}
+	}
+
+	return nil
+}
+
+// func findRecordByExample(exampleRecord dnsRecord, records []dnsRecord) *dnsRecord {
+// 	for _, record := range records {
+// 		if record.equals(exampleRecord) {
+// 			return &record
+// 		}
+// 	}
+
+// 	return nil
+// }
+
+func getRecordsToAppend(updateRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
+	var recordsToAppend []dnsRecord
+	for _, record := range updateRecords {
+		var foundRecord *dnsRecord
+		if record.RecType != "MX" {
+			foundRecord = findRecordByNameAndType(record.HostName, record.RecType, existingRecords)
+		} else {
+			foundRecord = findRecordByNameAndTypeAndPriority(record.HostName, record.RecType, record.Priority, existingRecords)
+		}
+		if foundRecord == nil || foundRecord.Destination != record.Destination {
+			recordsToAppend = append(recordsToAppend, record)
+		}
+	}
+	return recordsToAppend
+}
+
+func getRecordsToSet(updateRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
+	var recordsToUpdate []dnsRecord
+	var recordsToAppend []dnsRecord
+	for _, record := range updateRecords {
+		var foundRecord *dnsRecord
+		if record.ID != "" {
+			foundRecord = findRecordByID(record.ID, existingRecords)
+		} else if record.RecType != "MX" {
+			foundRecord = findRecordByNameAndType(record.HostName, record.RecType, existingRecords)
+		} else {
+			foundRecord = findRecordByNameAndTypeAndPriority(record.HostName, record.RecType, record.Priority, existingRecords)
+		}
+
+		if foundRecord != nil && !foundRecord.equals(record) {
+			record.ID = foundRecord.ID
+			recordsToUpdate = append(recordsToUpdate, record)
+		} else if foundRecord == nil {
+			recordsToAppend = append(recordsToAppend, record)
+		}
+	}
+	return append(recordsToUpdate, recordsToAppend...)
 }

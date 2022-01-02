@@ -12,6 +12,10 @@ type dnsRecord struct {
 	Priority    int    `json:"priority,string"`
 }
 
+func (rec *dnsRecord) equals(otherRec dnsRecord) bool {
+	return rec.HostName == otherRec.HostName && rec.RecType == otherRec.RecType && rec.Destination == otherRec.Destination && rec.Priority == otherRec.Priority
+}
+
 type dnsRecordSet struct {
 	DnsRecords []dnsRecord `json:"dnsrecords"`
 }
