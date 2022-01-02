@@ -3,13 +3,9 @@
 package netcup
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"sync"
-	"time"
 
 	"github.com/libdns/libdns"
 )
@@ -33,66 +29,58 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	apiSessionId, err := p.login(ctx)
+	apiSessionID, err := p.login(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer p.logout(ctx, apiSessionId)
+	defer p.logout(ctx, apiSessionID)
 
-	dnsZone, err := p.getDNSZone(ctx, zone, apiSessionId)
-	if err != nil {
-		return nil, err
-	}
-
-	infoDNSrecordsRequest := request{
-		Action: "infoDnsRecords",
-		Param: requestParam{
-			DomainName:     zone,
-			CustomerNumber: p.CustomerNumber,
-			ApiKey:         p.ApiKey,
-			ApiSessionID:   apiSessionId,
-		},
-	}
-
-	requestBody, err := json.Marshal(infoDNSrecordsRequest)
+	dnsZone, err := p.infoDNSZone(ctx, zone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", apiUrl, bytes.NewReader(requestBody))
+	recordSet, err := p.infoDNSRecords(ctx, zone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := p.doRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	var recordSet dnsRecordSet
-	if err = json.Unmarshal(res.ResponseData, &recordSet); err != nil {
-		return nil, err
-	}
-
-	var libDNSRecords []libdns.Record
-	for _, record := range recordSet.DnsRecords {
-		libDNSRecord := libdns.Record{
-			ID:       record.ID,
-			Type:     record.RecType,
-			Name:     record.HostName,
-			Value:    record.Destination,
-			TTL:      time.Duration(dnsZone.TTL * int64(time.Second)),
-			Priority: record.Priority,
-		}
-		libDNSRecords = append(libDNSRecords, libDNSRecord)
-	}
-
-	return libDNSRecords, nil
+	return toLibdnsRecords(recordSet.DnsRecords, dnsZone.TTL), nil
 }
 
 // AppendRecords adds records to the zone. It returns the records that were added.
+// netcup records cannot have individual TTLs, there is one TTL for all records in the zone
 func (p *Provider) AppendRecords(ctx context.Context, zone string, records []libdns.Record) ([]libdns.Record, error) {
-	return nil, fmt.Errorf("TODO: not implemented")
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	apiSessionID, err := p.login(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer p.logout(ctx, apiSessionID)
+
+	dnsZone, err := p.infoDNSZone(ctx, zone, apiSessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	recordSetBefore, err := p.infoDNSRecords(ctx, zone, apiSessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	updateRecordSet := dnsRecordSet{
+		DnsRecords: toNetcupRecords(records),
+	}
+	recordSetAfter, err := p.updateDNSRecords(ctx, zone, updateRecordSet, apiSessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	appendedRecords := difference(recordSetAfter.DnsRecords, recordSetBefore.DnsRecords)
+
+	return toLibdnsRecords(appendedRecords, dnsZone.TTL), nil
 }
 
 // SetRecords sets the records in the zone, either by updating existing records or creating new ones.
