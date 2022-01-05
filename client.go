@@ -53,8 +53,8 @@ func (p *Provider) login(ctx context.Context) (string, error) {
 		Action: "login",
 		Param: requestParam{
 			CustomerNumber: p.CustomerNumber,
-			ApiKey:         p.ApiKey,
-			ApiPassword:    p.ApiPassword,
+			APIKey:         p.APIKey,
+			APIPassword:    p.APIPassword,
 		},
 	}
 
@@ -68,7 +68,7 @@ func (p *Provider) login(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return asd.ApiSessionId, nil
+	return asd.APISessionId, nil
 }
 
 func (p *Provider) logout(ctx context.Context, apiSessionID string) {
@@ -76,8 +76,8 @@ func (p *Provider) logout(ctx context.Context, apiSessionID string) {
 		Action: "logout",
 		Param: requestParam{
 			CustomerNumber: p.CustomerNumber,
-			ApiKey:         p.ApiKey,
-			ApiSessionID:   apiSessionID,
+			APIKey:         p.APIKey,
+			APISessionID:   apiSessionID,
 		},
 	}
 
@@ -90,8 +90,8 @@ func (p *Provider) infoDNSZone(ctx context.Context, zone string, apiSessionID st
 		Param: requestParam{
 			DomainName:     zone,
 			CustomerNumber: p.CustomerNumber,
-			ApiKey:         p.ApiKey,
-			ApiSessionID:   apiSessionID,
+			APIKey:         p.APIKey,
+			APISessionID:   apiSessionID,
 		},
 	}
 
@@ -114,8 +114,8 @@ func (p *Provider) infoDNSRecords(ctx context.Context, zone string, apiSessionID
 		Param: requestParam{
 			DomainName:     zone,
 			CustomerNumber: p.CustomerNumber,
-			ApiKey:         p.ApiKey,
-			ApiSessionID:   apiSessionID,
+			APIKey:         p.APIKey,
+			APISessionID:   apiSessionID,
 		},
 	}
 
@@ -138,9 +138,9 @@ func (p *Provider) updateDNSRecords(ctx context.Context, zone string, updateReco
 		Param: requestParam{
 			DomainName:     zone,
 			CustomerNumber: p.CustomerNumber,
-			ApiKey:         p.ApiKey,
-			ApiSessionID:   apiSessionID,
-			DnsRecordSet:   updateRecordSet,
+			APIKey:         p.APIKey,
+			APISessionID:   apiSessionID,
+			DNSRecordSet:   updateRecordSet,
 		},
 	}
 

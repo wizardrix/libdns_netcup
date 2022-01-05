@@ -22,7 +22,7 @@ type dnsRecordSet struct {
 }
 
 type apiSessionData struct {
-	ApiSessionId string `json:"apisessionid"`
+	APISessionId string `json:"apisessionid"`
 }
 
 // Information about the zone. Name: the zone name, TTL: time to live in seconds
@@ -34,10 +34,10 @@ type dnsZone struct {
 type requestParam struct {
 	DomainName     string       `json:"domainname,omitempty"`
 	CustomerNumber string       `json:"customernumber"`
-	ApiKey         string       `json:"apikey"`
-	ApiPassword    string       `json:"apipassword,omitempty"`
-	ApiSessionID   string       `json:"apisessionid,omitempty"`
-	DnsRecordSet   dnsRecordSet `json:"dnsrecordset,omitempty"`
+	APIKey         string       `json:"apikey"`
+	APIPassword    string       `json:"apipassword,omitempty"`
+	APISessionID   string       `json:"apisessionid,omitempty"`
+	DNSRecordSet   dnsRecordSet `json:"dnsrecordset,omitempty"`
 }
 
 type request struct {

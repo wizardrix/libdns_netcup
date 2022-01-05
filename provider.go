@@ -18,8 +18,8 @@ import (
 // Provider facilitates DNS record manipulation with netcup.
 type Provider struct {
 	CustomerNumber string `json:"customer_number"`
-	ApiKey         string `json:"api_key"`
-	ApiPassword    string `json:"api_password"`
+	APIKey         string `json:"api_key"`
+	APIPassword    string `json:"api_password"`
 	mutex          sync.Mutex
 }
 
@@ -81,11 +81,14 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 	recordSetToAppend := dnsRecordSet{
 		DnsRecords: recordsToAppend,
 	}
-	if _, err = p.updateDNSRecords(ctx, zone, recordSetToAppend, apiSessionID); err != nil {
+	updatedRecordSet, err := p.updateDNSRecords(ctx, zone, recordSetToAppend, apiSessionID)
+	if err != nil {
 		return nil, err
 	}
 
-	return toLibdnsRecords(recordsToAppend, dnsZone.TTL), nil
+	appendedRecords := difference(updatedRecordSet.DnsRecords, existingRecordSet.DnsRecords)
+
+	return toLibdnsRecords(appendedRecords, dnsZone.TTL), nil
 }
 
 // SetRecords sets the records in the zone, either by updating existing records or creating new ones.
@@ -124,11 +127,14 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 	recordSetToSet := dnsRecordSet{
 		DnsRecords: recordsToSet,
 	}
-	if _, err = p.updateDNSRecords(ctx, zone, recordSetToSet, apiSessionID); err != nil {
+	updatedRecordSet, err := p.updateDNSRecords(ctx, zone, recordSetToSet, apiSessionID)
+	if err != nil {
 		return nil, err
 	}
 
-	return toLibdnsRecords(recordsToSet, dnsZone.TTL), nil
+	updatedRecords := difference(updatedRecordSet.DnsRecords, existingRecordSet.DnsRecords)
+
+	return toLibdnsRecords(updatedRecords, dnsZone.TTL), nil
 }
 
 // DeleteRecords deletes the records from the zone. It returns the records that were deleted.
@@ -151,24 +157,27 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 		return nil, err
 	}
 
-	recordSet, err := p.infoDNSRecords(ctx, zone, apiSessionID)
+	existingRecordSet, err := p.infoDNSRecords(ctx, zone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
 
 	netcupRecords := toNetcupRecords(records)
-	recordsToDelete := getRecordsToDelete(netcupRecords, recordSet.DnsRecords)
+	recordsToDelete := getRecordsToDelete(netcupRecords, existingRecordSet.DnsRecords)
 	if len(recordsToDelete) == 0 {
 		return []libdns.Record{}, nil
 	}
 	recordSetToDelete := dnsRecordSet{
 		DnsRecords: recordsToDelete,
 	}
-	if _, err = p.updateDNSRecords(ctx, zone, recordSetToDelete, apiSessionID); err != nil {
+	updatedRecordSet, err := p.updateDNSRecords(ctx, zone, recordSetToDelete, apiSessionID)
+	if err != nil {
 		return nil, err
 	}
 
-	return toLibdnsRecords(recordsToDelete, dnsZone.TTL), nil
+	deletedRecords := difference(existingRecordSet.DnsRecords, updatedRecordSet.DnsRecords)
+
+	return toLibdnsRecords(deletedRecords, dnsZone.TTL), nil
 }
 
 // Interface guards

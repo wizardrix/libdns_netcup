@@ -38,21 +38,21 @@ func toNetcupRecords(libnsRecords []libdns.Record) []dnsRecord {
 }
 
 // difference returns the records that are in a but not in b
-// func difference(a, b []dnsRecord) []dnsRecord {
-// 	bIDmap := make(map[string]struct{}, len(b))
-// 	for _, elm := range b {
-// 		bIDmap[elm.ID] = struct{}{}
-// 	}
+func difference(a, b []dnsRecord) []dnsRecord {
+	bIDmap := make(map[dnsRecord]struct{}, len(b))
+	for _, elm := range b {
+		bIDmap[elm] = struct{}{}
+	}
 
-// 	var diff []dnsRecord
-// 	for _, elm := range a {
-// 		if _, found := bIDmap[elm.ID]; !found {
-// 			diff = append(diff, elm)
-// 		}
-// 	}
+	var diff []dnsRecord
+	for _, elm := range a {
+		if _, found := bIDmap[elm]; !found {
+			diff = append(diff, elm)
+		}
+	}
 
-// 	return diff
-// }
+	return diff
+}
 
 func findRecordByID(id string, records []dnsRecord) *dnsRecord {
 	for _, record := range records {
