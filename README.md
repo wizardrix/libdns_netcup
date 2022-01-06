@@ -9,7 +9,7 @@ This package implements the [libdns interfaces](https://github.com/libdns/libdns
 The provider is configured by instantiating the `netcup.Provider` with the customer number, the API key and the API password for the DNS API obtained from netcup ([guide](https://www.netcup-wiki.de/wiki/CCP_API)).
 Here is a minimal working example to get all DNS records using environment variables for the credentials:
 
-```
+```go
 import (
 	"context"
 	"fmt"
