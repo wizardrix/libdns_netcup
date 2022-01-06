@@ -1,26 +1,39 @@
-**DEVELOPER INSTRUCTIONS:**
+# netcup for [`libdns`](https://github.com/libdns/libdns)
 
-This repo is a template for developers to use when creating new [libdns](https://github.com/libdns/libdns) provider implementations.
+[![Go Reference](https://pkg.go.dev/badge/test.svg)](https://pkg.go.dev/github.com/libdns/netcup)
 
-Be sure to update:
+This package implements the [libdns interfaces](https://github.com/libdns/libdns) for the [netcup DNS API](https://ccp.netcup.net/run/webservice/servers/endpoint.php), allowing you to manage DNS records.
 
-- The package name
-- The Go module name in go.mod
-- The latest `libdns/libdns` version in go.mod
-- All comments and documentation, including README below and godocs
-- License (must be compatible with Apache/MIT)
-- All "TODO:"s is in the code
-- All methods that currently do nothing
+## Configuration
 
-Remove this section from the readme before publishing.
+The provider is configured by instantiating the `netcup.Provider` with the customer number, the API key and the API password for the DNS API obtained from netcup ([guide](https://www.netcup-wiki.de/wiki/CCP_API)).
+Here is a minimal working example to get all DNS records using environment variables for the credentials:
 
----
+```
+import (
+	"context"
+	"fmt"
+	"os"
 
-\<PROVIDER NAME\> for [`libdns`](https://github.com/libdns/libdns)
-=======================
+	"github.com/libdns/netcup"
+)
 
-[![Go Reference](https://pkg.go.dev/badge/test.svg)](https://pkg.go.dev/github.com/libdns/TODO:PROVIDER_NAME)
+func main() {
+	provider := netcup.Provider{
+		CustomerNumber: os.Getenv("LIBDNS_NETCUP_CUSTOMER_NUMBER"),
+		APIKey:         os.Getenv("LIBDNS_NETCUP_API_KEY"),
+		APIPassword:    os.Getenv("LIBDNS_NETCUP_API_PASSWORD"),
+	}
+	ctx := context.TODO()
+	zone := os.Getenv("LIBDNS_NETCUP_ZONE")
 
-This package implements the [libdns interfaces](https://github.com/libdns/libdns) for \<PROVIDER\>, allowing you to manage DNS records.
-
-TODO: Show how to configure and use. Explain any caveats.
+	records, err := provider.GetRecords(ctx, zone)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	for _, record := range records {
+		fmt.Printf("%+v\n", record)
+	}
+}
+```
