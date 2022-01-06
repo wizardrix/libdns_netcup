@@ -1,4 +1,4 @@
-module github.com/libdns/netcup
+module github.com/wizardrix/libdns_netcup
 
 go 1.17
 
