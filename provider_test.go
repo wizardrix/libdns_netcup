@@ -1,5 +1,5 @@
-// Package netcup implements a DNS record management client compatible
-// with the libdns interfaces for netcup.
+// Integration tests for the netcup provider
+
 package netcup
 
 import (

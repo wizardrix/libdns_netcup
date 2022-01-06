@@ -9,13 +9,12 @@ import (
 	"github.com/libdns/libdns"
 )
 
-// TODO: Providers must not require additional provisioning steps by the callers; it
-// should work simply by populating a struct and calling methods on it. If your DNS
-// service requires long-lived state or some extra provisioning step, do it implicitly
-// when methods are called; sync.Once can help with this, and/or you can use a
-// sync.(RW)Mutex in your Provider struct to synchronize implicit provisioning.
-
 // Provider facilitates DNS record manipulation with netcup.
+// CustomerNumber, APIKey and APIPassword have to be filled with the respective credentials from netcup.
+// The netcup API requires a session ID for all requests, so at the beginning of each method call
+// a login is performed to receive the session ID and at the end the session is stopped with a logout.
+// The mutex locks concurrent access on all four implemented methods to make sure there is
+// no race condition in the netcup zone and record configuration.
 type Provider struct {
 	CustomerNumber string `json:"customer_number"`
 	APIKey         string `json:"api_key"`
@@ -86,6 +85,7 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 		return nil, err
 	}
 
+	// the netcup API always returns all records, so the ones before the update have to be compared to the ones after to return only the appended records
 	appendedRecords := difference(updatedRecordSet.DnsRecords, existingRecordSet.DnsRecords)
 
 	return toLibdnsRecords(appendedRecords, dnsZone.TTL), nil
@@ -132,6 +132,7 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 		return nil, err
 	}
 
+	// the netcup API always returns all records, so the ones before the update have to be compared to the ones after to return only the updated records
 	updatedRecords := difference(updatedRecordSet.DnsRecords, existingRecordSet.DnsRecords)
 
 	return toLibdnsRecords(updatedRecords, dnsZone.TTL), nil
@@ -175,6 +176,7 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 		return nil, err
 	}
 
+	// the netcup API always returns all records, so the ones before the deletion have to be compared to the ones after to return only the deleted records
 	deletedRecords := difference(existingRecordSet.DnsRecords, updatedRecordSet.DnsRecords)
 
 	return toLibdnsRecords(deletedRecords, dnsZone.TTL), nil

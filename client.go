@@ -1,3 +1,5 @@
+// Direct implementation of all required netucp DNS API endpoints
+
 package netcup
 
 import (
@@ -9,8 +11,11 @@ import (
 	"net/http"
 )
 
+// fixed netcup API URL, may be made variable later
 const apiUrl = "https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON"
 
+// Executes a request to the netcup API with a given request value.
+// Returns the response with raw response data, which needs to be unmarshalled  depending on the request.
 func (p *Provider) doRequest(ctx context.Context, req request) (*response, error) {
 	requestBody, err := json.Marshal(req)
 	if err != nil {
@@ -48,6 +53,8 @@ func (p *Provider) doRequest(ctx context.Context, req request) (*response, error
 	return &response, nil
 }
 
+// login starts an API session that lasts for some minutes (see nectup API documentation).
+// The session ID is returned, which is needed for all other requests.
 func (p *Provider) login(ctx context.Context) (string, error) {
 	loginRequest := request{
 		Action: "login",
@@ -71,6 +78,7 @@ func (p *Provider) login(ctx context.Context) (string, error) {
 	return asd.APISessionId, nil
 }
 
+// Stops the session with the given session ID.
 func (p *Provider) logout(ctx context.Context, apiSessionID string) {
 	logoutRequest := request{
 		Action: "logout",
@@ -84,6 +92,7 @@ func (p *Provider) logout(ctx context.Context, apiSessionID string) {
 	p.doRequest(ctx, logoutRequest)
 }
 
+// Provides information about the given zone, especially the TTL
 func (p *Provider) infoDNSZone(ctx context.Context, zone string, apiSessionID string) (*dnsZone, error) {
 	infoDNSZoneRequest := request{
 		Action: "infoDnsZone",
@@ -108,6 +117,7 @@ func (p *Provider) infoDNSZone(ctx context.Context, zone string, apiSessionID st
 	return &dz, nil
 }
 
+// Returns a slice of all records found in the given zone.
 func (p *Provider) infoDNSRecords(ctx context.Context, zone string, apiSessionID string) (*dnsRecordSet, error) {
 	infoDNSrecordsRequest := request{
 		Action: "infoDnsRecords",
@@ -132,6 +142,8 @@ func (p *Provider) infoDNSRecords(ctx context.Context, zone string, apiSessionID
 	return &recordSet, err
 }
 
+// Updates records in the given zone with the values in the dnsRecordSet. Records are appended when no ID is set and updated when
+// an ID is set and it exists. Returns all records found in the zone (with the appends and updates applied).
 func (p *Provider) updateDNSRecords(ctx context.Context, zone string, updateRecordSet dnsRecordSet, apiSessionID string) (*dnsRecordSet, error) {
 	updateDNSrecordsRequest := request{
 		Action: "updateDnsRecords",

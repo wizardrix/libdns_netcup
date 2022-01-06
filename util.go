@@ -1,3 +1,5 @@
+// Utility functions needed by the provider methods
+
 package netcup
 
 import (
@@ -6,6 +8,7 @@ import (
 	"github.com/libdns/libdns"
 )
 
+// Converts netcup records to libdns records. Since the netcup records don't have individual TTLs, the given TTL is used for all libdns records.
 func toLibdnsRecords(netcupRecords []dnsRecord, ttl int64) []libdns.Record {
 	var libdnsRecords []libdns.Record
 	for _, record := range netcupRecords {
@@ -22,6 +25,7 @@ func toLibdnsRecords(netcupRecords []dnsRecord, ttl int64) []libdns.Record {
 	return libdnsRecords
 }
 
+// Converts libdns records to netcup records.
 func toNetcupRecords(libnsRecords []libdns.Record) []dnsRecord {
 	var netcupRecords []dnsRecord
 	for _, record := range libnsRecords {
@@ -54,6 +58,7 @@ func difference(a, b []dnsRecord) []dnsRecord {
 	return diff
 }
 
+// Searches for a record with the given ID in the given records.
 func findRecordByID(id string, records []dnsRecord) *dnsRecord {
 	for _, record := range records {
 		if record.ID == id {
@@ -64,6 +69,8 @@ func findRecordByID(id string, records []dnsRecord) *dnsRecord {
 	return nil
 }
 
+// Searches for a record with the given host name and record type in the given records.
+// Only the first one found is returned.
 func findRecordByNameAndType(hostName string, recType string, records []dnsRecord) *dnsRecord {
 	for _, record := range records {
 		if record.HostName == hostName && record.RecType == recType {
@@ -74,6 +81,8 @@ func findRecordByNameAndType(hostName string, recType string, records []dnsRecor
 	return nil
 }
 
+// Searches for a record with the given host name, record type and priority in the given records.
+// Only the first one found is returned.
 func findRecordByNameAndTypeAndPriority(hostName string, recType string, priority int, records []dnsRecord) *dnsRecord {
 	for _, record := range records {
 		if record.HostName == hostName && record.RecType == recType && record.Priority == priority {
@@ -84,6 +93,9 @@ func findRecordByNameAndTypeAndPriority(hostName string, recType string, priorit
 	return nil
 }
 
+// Searches for a record in the given records.
+// The first criterion is the ID. If that's not set, then the name and type (and optionally the priority, if it's an MX record) are used.
+// Only the first one found is returned.
 func findRecord(record dnsRecord, records []dnsRecord) *dnsRecord {
 	var foundRecord *dnsRecord
 	if record.ID != "" {
@@ -97,6 +109,7 @@ func findRecord(record dnsRecord, records []dnsRecord) *dnsRecord {
 	return foundRecord
 }
 
+// Returns all records from appendRecords, that are not in existingRecords.
 func getRecordsToAppend(appendRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
 	var recordsToAppend []dnsRecord
 	for _, record := range appendRecords {
@@ -108,6 +121,7 @@ func getRecordsToAppend(appendRecords []dnsRecord, existingRecords []dnsRecord) 
 	return recordsToAppend
 }
 
+// Returns all records from setRecords, that either are not in existingRecords or have a differentValue there.
 func getRecordsToSet(setRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
 	var recordsToUpdate []dnsRecord
 	var recordsToAppend []dnsRecord
@@ -123,6 +137,7 @@ func getRecordsToSet(setRecords []dnsRecord, existingRecords []dnsRecord) []dnsR
 	return append(recordsToUpdate, recordsToAppend...)
 }
 
+// Returns all records from deleteRecords, that are in existingRecords.
 func getRecordsToDelete(deleteRecords []dnsRecord, existingRecords []dnsRecord) []dnsRecord {
 	var recordsToDelete []dnsRecord
 	for _, record := range deleteRecords {
