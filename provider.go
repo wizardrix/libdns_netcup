@@ -33,12 +33,14 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 	}
 	defer p.logout(ctx, apiSessionID)
 
-	dnsZone, err := p.infoDNSZone(ctx, zone, apiSessionID)
+	shortZone := trimTrailingDot(zone)
+
+	dnsZone, err := p.infoDNSZone(ctx, shortZone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	recordSet, err := p.infoDNSRecords(ctx, zone, apiSessionID)
+	recordSet, err := p.infoDNSRecords(ctx, shortZone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,12 +64,14 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 	}
 	defer p.logout(ctx, apiSessionID)
 
-	dnsZone, err := p.infoDNSZone(ctx, zone, apiSessionID)
+	shortZone := trimTrailingDot(zone)
+
+	dnsZone, err := p.infoDNSZone(ctx, shortZone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	existingRecordSet, err := p.infoDNSRecords(ctx, zone, apiSessionID)
+	existingRecordSet, err := p.infoDNSRecords(ctx, shortZone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +84,7 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 	recordSetToAppend := dnsRecordSet{
 		DnsRecords: recordsToAppend,
 	}
-	updatedRecordSet, err := p.updateDNSRecords(ctx, zone, recordSetToAppend, apiSessionID)
+	updatedRecordSet, err := p.updateDNSRecords(ctx, shortZone, recordSetToAppend, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -109,12 +113,14 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 	}
 	defer p.logout(ctx, apiSessionID)
 
-	dnsZone, err := p.infoDNSZone(ctx, zone, apiSessionID)
+	shortZone := trimTrailingDot(zone)
+
+	dnsZone, err := p.infoDNSZone(ctx, shortZone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	existingRecordSet, err := p.infoDNSRecords(ctx, zone, apiSessionID)
+	existingRecordSet, err := p.infoDNSRecords(ctx, shortZone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +133,7 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 	recordSetToSet := dnsRecordSet{
 		DnsRecords: recordsToSet,
 	}
-	updatedRecordSet, err := p.updateDNSRecords(ctx, zone, recordSetToSet, apiSessionID)
+	updatedRecordSet, err := p.updateDNSRecords(ctx, shortZone, recordSetToSet, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -153,12 +159,14 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 	}
 	defer p.logout(ctx, apiSessionID)
 
-	dnsZone, err := p.infoDNSZone(ctx, zone, apiSessionID)
+	shortZone := trimTrailingDot(zone)
+
+	dnsZone, err := p.infoDNSZone(ctx, shortZone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	existingRecordSet, err := p.infoDNSRecords(ctx, zone, apiSessionID)
+	existingRecordSet, err := p.infoDNSRecords(ctx, shortZone, apiSessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +179,7 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 	recordSetToDelete := dnsRecordSet{
 		DnsRecords: recordsToDelete,
 	}
-	updatedRecordSet, err := p.updateDNSRecords(ctx, zone, recordSetToDelete, apiSessionID)
+	updatedRecordSet, err := p.updateDNSRecords(ctx, shortZone, recordSetToDelete, apiSessionID)
 	if err != nil {
 		return nil, err
 	}

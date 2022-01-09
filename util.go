@@ -3,10 +3,15 @@
 package netcup
 
 import (
+	"strings"
 	"time"
 
 	"github.com/libdns/libdns"
 )
+
+func trimTrailingDot(fqdn string) string {
+	return strings.TrimSuffix(fqdn, ".")
+}
 
 // Converts netcup records to libdns records. Since the netcup records don't have individual TTLs, the given TTL is used for all libdns records.
 func toLibdnsRecords(netcupRecords []dnsRecord, ttl int64) []libdns.Record {
