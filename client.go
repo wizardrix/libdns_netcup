@@ -14,6 +14,8 @@ import (
 // fixed netcup API URL, may be made variable later
 const apiUrl = "https://ccp.netcup.net/run/webservice/servers/endpoint.php?JSON"
 
+const loggingPrefixNetcup = "[netcup]"
+
 // Executes a request to the netcup API with a given request value.
 // Returns the response with raw response data, which needs to be unmarshalled  depending on the request.
 func (p *Provider) doRequest(ctx context.Context, req request) (*response, error) {
@@ -45,10 +47,10 @@ func (p *Provider) doRequest(ctx context.Context, req request) (*response, error
 	}
 
 	if response.Status != "success" {
-		return nil, fmt.Errorf("[netcup] %v: %v", response.ShortMessage, response.LongMessage)
+		return nil, fmt.Errorf("%v %v: %v", loggingPrefixNetcup, response.ShortMessage, response.LongMessage)
 	}
 
-	fmt.Printf("[netcup] %v: %v\n", response.ShortMessage, response.LongMessage)
+	fmt.Printf("%v %v: %v\n", loggingPrefixNetcup, response.ShortMessage, response.LongMessage)
 
 	return &response, nil
 }

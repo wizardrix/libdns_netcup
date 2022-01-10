@@ -9,7 +9,8 @@ import (
 	"github.com/libdns/libdns"
 )
 
-func trimTrailingDot(fqdn string) string {
+// Strips the trailing dot from a FQDN
+func unFQDN(fqdn string) string {
 	return strings.TrimSuffix(fqdn, ".")
 }
 

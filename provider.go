@@ -4,6 +4,7 @@ package netcup
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/libdns/libdns"
@@ -22,10 +23,14 @@ type Provider struct {
 	mutex          sync.Mutex
 }
 
+const loggingPrefixLibdnsNetcup = "[libdns_netcup]"
+
 // GetRecords lists all the records in the zone.
 func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
+	fmt.Printf("%v Getting records of zone %v\n", loggingPrefixLibdnsNetcup, zone)
 
 	apiSessionID, err := p.login(ctx)
 	if err != nil {
@@ -33,7 +38,7 @@ func (p *Provider) GetRecords(ctx context.Context, zone string) ([]libdns.Record
 	}
 	defer p.logout(ctx, apiSessionID)
 
-	shortZone := trimTrailingDot(zone)
+	shortZone := unFQDN(zone)
 
 	dnsZone, err := p.infoDNSZone(ctx, shortZone, apiSessionID)
 	if err != nil {
@@ -58,13 +63,15 @@ func (p *Provider) AppendRecords(ctx context.Context, zone string, records []lib
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
+	fmt.Printf("%v Appending records %+v to zone %v\n", loggingPrefixLibdnsNetcup, records, zone)
+
 	apiSessionID, err := p.login(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer p.logout(ctx, apiSessionID)
 
-	shortZone := trimTrailingDot(zone)
+	shortZone := unFQDN(zone)
 
 	dnsZone, err := p.infoDNSZone(ctx, shortZone, apiSessionID)
 	if err != nil {
@@ -107,13 +114,15 @@ func (p *Provider) SetRecords(ctx context.Context, zone string, records []libdns
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
+	fmt.Printf("%v Setting records %+v for zone %v\n", loggingPrefixLibdnsNetcup, records, zone)
+
 	apiSessionID, err := p.login(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer p.logout(ctx, apiSessionID)
 
-	shortZone := trimTrailingDot(zone)
+	shortZone := unFQDN(zone)
 
 	dnsZone, err := p.infoDNSZone(ctx, shortZone, apiSessionID)
 	if err != nil {
@@ -153,13 +162,15 @@ func (p *Provider) DeleteRecords(ctx context.Context, zone string, records []lib
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
+	fmt.Printf("%v Deleting records %+v from zone %v\n", loggingPrefixLibdnsNetcup, records, zone)
+
 	apiSessionID, err := p.login(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer p.logout(ctx, apiSessionID)
 
-	shortZone := trimTrailingDot(zone)
+	shortZone := unFQDN(zone)
 
 	dnsZone, err := p.infoDNSZone(ctx, shortZone, apiSessionID)
 	if err != nil {
