@@ -1,5 +1,7 @@
 # netcup for [`libdns`](https://github.com/libdns/libdns)
 
+**This repository is not maintained, please refer to [this repository](https://github.com/libdns/netcup).**
+
 [![Go Reference](https://pkg.go.dev/badge/test.svg)](https://pkg.go.dev/github.com/libdns/netcup)
 
 This package implements the [libdns interfaces](https://github.com/libdns/libdns) for the [netcup DNS API](https://ccp.netcup.net/run/webservice/servers/endpoint.php), allowing you to manage DNS records.
